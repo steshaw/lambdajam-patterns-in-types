@@ -16,10 +16,13 @@ case class State[S, A](run: S => (S, A)) {
    * The following laws must hold:
    *  1) r.map(z => z) == r
    *  2) r.map(z => f(g(z))) == r.map(g).map(f)
-   *
    */
   def map[B](f: A => B): State[S, B] =
-    ???
+    State(run = s => {
+      val sa: (S, A) = run(s)
+      val b: B = f(sa._2)
+      (s, b)
+    })
 
   /*
    * Exercise 4.2:
@@ -28,10 +31,12 @@ case class State[S, A](run: S => (S, A)) {
    *
    * The following law must hold:
    *   r.flatMap(f).flatMap(g) == r.flatMap(z => f(z).flatMap(g))
-   *
    */
   def flatMap[B](f: A => State[S, B]): State[S, B] =
-    ???
+    State[S, B](run = s => {
+      val sa: (S, A) = run(s)
+      f(sa._2)
+    })
 }
 
 object State {

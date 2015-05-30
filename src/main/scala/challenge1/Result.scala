@@ -2,6 +2,9 @@ package challenge1
 
 import challenge0._, EqualSyntax._
 
+case class Explosion[A](exception: Throwable) extends Result[A]
+case class Fail[A](message: String) extends Result[A]
+case class Ok[A](value: A) extends Result[A]
 
 /*
  * A result type that represents either an exception or an error message or a value.
@@ -19,7 +22,11 @@ sealed trait Result[A] {
     explosion: Throwable => X,
     fail: String => X,
     ok: A => X
-  ): X = ???
+  ): X = this match {
+    case Explosion(e) => explosion(e)
+    case Fail(message) => fail(message)
+    case Ok(value) => ok(value)
+  }
 
   /*
    * Exercise 1.2:
@@ -32,9 +39,11 @@ sealed trait Result[A] {
    *
    * Hint: Try using flatMap.
    */
-  def map[B](f: A => B): Result[B] =
-    ???
-
+  def map[B](f: A => B): Result[B] = this.fold(
+    explosion = Result.explosion,
+    fail = Result.fail,
+    ok = a => Ok(f(a))
+  )
 
   /*
    * Exercise 1.3:
@@ -46,13 +55,12 @@ sealed trait Result[A] {
    *
    * Hint: Try using fold.
    */
-  def flatMap[B](f: A => Result[B]): Result[B] =
-    ???
+  def flatMap[B](f: A => Result[B]): Result[B] = this.fold(
+    explosion = e => Explosion(e),
+    fail = error => Fail(error),
+    ok = a => f(a)
+  )
 }
-
-case class Explosion[A](exception: Throwable) extends Result[A]
-case class Fail[A](message: String) extends Result[A]
-case class Ok[A](value: A) extends Result[A]
 
 object Result {
   def explosion[A](exception: Throwable): Result[A] =
